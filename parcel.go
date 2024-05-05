@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 type ParcelStore struct {
@@ -94,8 +95,11 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 	// запрашиваем с помощье метода Get
 	p, err := s.Get(number)
 	if err != nil {
-		return errors.New("there is no record with this number")
+		wrapsErr := fmt.Errorf("error reading a record with a number %d, error %w ", number, err)
+		return wrapsErr
+		// return errors.New("there is no record with this number")
 		// если так правильно, то в Delete надо тоже исправлять
+		// wrapsErr := fmt.Errorf("... %w ...", ..., err, ...)
 	}
 	// менять адрес можно только если значение статуса registered
 	// тут ошибок нет. Проверяем значение p.Status
@@ -105,7 +109,9 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 			sql.Named("address", address),
 			sql.Named("number", number))
 		if err != nil {
-			return errors.New("address update error")
+			wrapsErr := fmt.Errorf("error updating the address of a record with a number %d, error %w ", number, err)
+			return wrapsErr
+			// return errors.New("address update error")
 			// или тут лучше оставить return err?
 		}
 		return nil
