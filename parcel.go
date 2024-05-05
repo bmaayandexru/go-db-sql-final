@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type ParcelStore struct {
@@ -44,9 +43,14 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	// заполните объект Parcel данными из таблицы
 	p := Parcel{} // это прекод
 	err := row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+	if err != nil {
+		return p, err
+		// вариант return Parsel{}, err // а как правильно??
+		// если можно то прокомментируйте как правильно и почему
+		// желательно подробно)))
+	}
 
-	// return p, nil // это прекод
-	return p, err
+	return p, nil
 }
 
 func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
@@ -54,38 +58,28 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	// здесь из таблицы может вернуться несколько строк
 	rows, err := s.db.Query("SELECT number, client, status, address, created_at FROM parcel WHERE client = :client", sql.Named("client", client))
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	// заполните срез Parcel данными из таблицы
 	var res []Parcel
-
 	for rows.Next() {
 		var p Parcel
-
 		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
 			return nil, err
 		}
 		// добавить в res
 		res = append(res, p)
 	}
-
 	if err := rows.Err(); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
-
-	// return res, err //  а так можно??? err всё равно гарантировано nil
-	// и как лучше, правильнее????
 	return res, nil
 }
 
 func (s ParcelStore) SetStatus(number int, status string) error {
 	// реализуйте обновление статуса в таблице parcel
-	// статус соответствует. меняем значение адреса
 	_, err := s.db.Exec("UPDATE parcel SET status = :status WHERE number = :number",
 		sql.Named("status", status),
 		sql.Named("number", number))
@@ -98,7 +92,9 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 
 	// запрашиваем с помощье метода Get
 	p, err := s.Get(number)
-
+	if err != nil {
+		return err
+	}
 	// менять адрес можно только если значение статуса registered
 	// тут ошибок нет. Проверяем значение p.Status
 	if p.Status == ParcelStatusRegistered {
@@ -106,19 +102,12 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		_, err = s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
 			sql.Named("address", address),
 			sql.Named("number", number))
-		/*
-			p, err := s.Get(number)
-			if err == nil {
-				fmt.Println("SetAddress| Изменен: ", p)
-			}
-		*/
-	} else {
-		// можно сформировать ошибку, что адрес не поменян из-за несоответсвия статуса
-		// и присвоить ее в err для возврата
-		// fmt.Println("Ничего изменилось. Ошибка:", err)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-
-	return err
+	return nil
 }
 
 func (s ParcelStore) Delete(number int) error {
@@ -128,17 +117,13 @@ func (s ParcelStore) Delete(number int) error {
 	if err != nil {
 		return err
 	}
-	// тут err == nil
 	if p.Status == ParcelStatusRegistered {
 		// удаляем
 		_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number", sql.Named("number", number))
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
-		// fmt.Println("Удалили строку с номером ", number)
 		return nil
 	}
-	// fmt.Println("Ничего не удалили. Статус ", p.Status)
 	return nil
 }
