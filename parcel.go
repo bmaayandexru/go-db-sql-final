@@ -97,9 +97,6 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 	if err != nil {
 		wrapsErr := fmt.Errorf("error reading a record with a number %d, error %w ", number, err)
 		return wrapsErr
-		// return errors.New("there is no record with this number")
-		// если так правильно, то в Delete надо тоже исправлять
-		// wrapsErr := fmt.Errorf("... %w ...", ..., err, ...)
 	}
 	// менять адрес можно только если значение статуса registered
 	// тут ошибок нет. Проверяем значение p.Status
@@ -111,12 +108,10 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		if err != nil {
 			wrapsErr := fmt.Errorf("error updating the address of a record with a number %d, error %w ", number, err)
 			return wrapsErr
-			// return errors.New("address update error")
-			// или тут лучше оставить return err?
 		}
 		return nil
 	} else {
-		return errors.New("status not registered")
+		return errors.New("Status not registered")
 	}
 }
 
@@ -125,15 +120,21 @@ func (s ParcelStore) Delete(number int) error {
 	// удалять строку можно только если значение статуса registered
 	p, err := s.Get(number)
 	if err != nil {
-		return err
+		wrapsErr := fmt.Errorf("Error reading a record with a number %d, error %w ", number, err)
+		return wrapsErr
 	}
 	if p.Status == ParcelStatusRegistered {
 		// удаляем
 		_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number", sql.Named("number", number))
 		if err != nil {
-			return err
+			// ошибка удаления
+			wrapsErr := fmt.Errorf("Error deleting a record with a number %d, error %w ", number, err)
+			return wrapsErr
 		}
+		// удалили
 		return nil
+	} else {
+		// статус не соответствует
+		return errors.New("Nothing has been deleted. Status not registered.")
 	}
-	return nil
 }

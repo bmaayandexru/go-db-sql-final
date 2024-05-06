@@ -122,8 +122,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	// отладка добавления
-	// return // работает едем дальше
 
 	// изменение адреса
 	newAddress := "Саратов, д. Верхние Зори, ул. Козлова, д. 25"
@@ -132,8 +130,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	// отладка изменения адреса
-	// return // работает едем дальше
 
 	// изменение статуса
 	err = service.NextStatus(p.Number)
@@ -141,16 +137,13 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	// отладка изменения статуса
-	// return
+
 	// вывод посылок клиента
 	err = service.PrintClientParcels(client)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	// отладка вывода посылок
-	// return
 
 	// попытка удаления отправленной посылки
 	err = service.Delete(p.Number)
