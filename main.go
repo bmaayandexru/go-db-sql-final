@@ -31,23 +31,26 @@ func NewParcelService(store ParcelStore) ParcelService {
 }
 
 func (s ParcelService) Register(client int, address string) (Parcel, error) {
+	// создаем структуру, которую будем добавлять в базу
 	parcel := Parcel{
-		Client:    client,
-		Status:    ParcelStatusRegistered,
-		Address:   address,
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		Client:    client,                                // это в параметрах
+		Status:    ParcelStatusRegistered,                // это поусловию: посылка при регистрации получает статус зарегистрирована
+		Address:   address,                               // это в параметрах
+		CreatedAt: time.Now().UTC().Format(time.RFC3339), // тут текущее время регистрации
 	}
 
-	id, err := s.store.Add(parcel)
+	id, err := s.store.Add(parcel) // Add возвращает id записи т к поле автоинкрементное
 	if err != nil {
 		return parcel, err
 	}
 
-	parcel.Number = id
+	parcel.Number = id // определяем parsel.Number т к сначала он был не определен
 
+	// выводим сообщение о добавлении записи
 	fmt.Printf("Новая посылка № %d на адрес %s от клиента с идентификатором %d зарегистрирована %s\n",
 		parcel.Number, parcel.Address, parcel.Client, parcel.CreatedAt)
 
+	// возвращаем то что добавилось в БД
 	return parcel, nil
 }
 
@@ -73,6 +76,7 @@ func (s ParcelService) NextStatus(number int) error {
 		return err
 	}
 
+	//  переключение статуса в зависимости от текущего
 	var nextStatus string
 	switch parcel.Status {
 	case ParcelStatusRegistered:
@@ -80,6 +84,7 @@ func (s ParcelService) NextStatus(number int) error {
 	case ParcelStatusSent:
 		nextStatus = ParcelStatusDelivered
 	case ParcelStatusDelivered:
+		// статус не меняем т к посылка доставлена
 		return nil
 	}
 
@@ -98,8 +103,15 @@ func (s ParcelService) Delete(number int) error {
 
 func main() {
 	// настройте подключение к БД
+	db, err := sql.Open("sqlite", "tracker.db")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
 
-	store := // создайте объект ParcelStore функцией NewParcelStore
+	// создайте объект ParcelStore функцией NewParcelStore
+	store := NewParcelStore(db)
 	service := NewParcelService(store)
 
 	// регистрация посылки
