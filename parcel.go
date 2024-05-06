@@ -97,6 +97,11 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 	if err != nil {
 		wrapsErr := fmt.Errorf("error reading a record with a number %d, error %w ", number, err)
 		return wrapsErr
+		// *** было return err
+		// *** Ревьюер: Тут нужно обработать ошибку и вернуть ее. Это крит.
+		// *** 			У вас в err в этой области видимости по сути новая ошибка, нужно также ее вернуть
+		// *** Обёртывание р...ра устроило. В каких случаях прямо нужно обертывать ошибку
+		// *** а в каких можно возвращать то, что есть?
 	}
 	// менять адрес можно только если значение статуса registered
 	// тут ошибок нет. Проверяем значение p.Status
@@ -108,10 +113,16 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		if err != nil {
 			wrapsErr := fmt.Errorf("error updating the address of a record with a number %d, error %w ", number, err)
 			return wrapsErr
+			// *** а можно было return err
+			// *** как правильно ???
 		}
 		return nil
 	} else {
-		return errors.New("Status not registered")
+		// тут генерируем собственную ощибку, т к статус контролинуем сами
+		wrapsErr := fmt.Errorf("error updating the address of a record with a number %d, status not registered", number)
+		return wrapsErr
+		// *** а можно return errors.New("Status not registered")
+		// *** как правильно ?
 	}
 }
 
@@ -122,6 +133,8 @@ func (s ParcelStore) Delete(number int) error {
 	if err != nil {
 		wrapsErr := fmt.Errorf("Error reading a record with a number %d, error %w ", number, err)
 		return wrapsErr
+		// *** а можно было return err
+		// *** как правильно ???
 	}
 	if p.Status == ParcelStatusRegistered {
 		// удаляем
@@ -130,6 +143,8 @@ func (s ParcelStore) Delete(number int) error {
 			// ошибка удаления
 			wrapsErr := fmt.Errorf("Error deleting a record with a number %d, error %w ", number, err)
 			return wrapsErr
+			// *** а можно было return err
+			// *** как правильно ???
 		}
 		// удалили
 		return nil
